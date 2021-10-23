@@ -16,10 +16,19 @@ func main() {
 	token := flag.String("token", "", "telegram token")
 	userId := flag.String("user-id", "", "user who should receive msg")
 	isReplyServer := flag.Bool("reply-server", false, "serve messages and reply user-id")
+	oldUsage := flag.Usage
+	flag.Usage = func() {
+		oldUsage()
+		fmt.Printf(`example: 
+	%s -token=${TOKEN} -reply-server
+	echo this is echo msg | %s -token=${TOKEN} -user-id=${USER}
+`, os.Args[0], os.Args[0])
+	}
+
 	flag.Parse()
 
 	if *token == "" || (*userId == "" && !*isReplyServer) {
-		flag.PrintDefaults()
+		flag.Usage()
 		os.Exit(1)
 	}
 
