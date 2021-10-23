@@ -25,3 +25,7 @@ server:
 .PHONY: echo
 echo:
 	export $$(cat .env) && echo "this is echo msg" | go run main.go -token=$${TOKEN} -user-id=$${USER}
+
+.PHONY: install
+install: build
+	sudo cp build/paranotify /usr/local/bin/paranotify
