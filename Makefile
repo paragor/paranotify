@@ -16,7 +16,7 @@ test:
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -o build/paranitfy main.go
+	CGO_ENABLED=0 go build -o build/paranotify main.go
 
 .PHONY: server
 server:

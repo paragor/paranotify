@@ -5,7 +5,7 @@
 Читает сообщение из stdin
 
 ```text
-Usage of paranitfy:
+Usage of paranotify:
   -reply-server
         serve messages and reply user-id
   -token string
@@ -13,6 +13,6 @@ Usage of paranitfy:
   -user-id string
         user who should receive msg
 example: 
-        paranitfy -token=${TOKEN} -reply-server
-        echo this is echo msg | paranitfy -token=${TOKEN} -user-id=${USER}
+        paranotify -token=${TOKEN} -reply-server
+        echo this is echo msg | paranotify -token=${TOKEN} -user-id=${USER}
 ```
