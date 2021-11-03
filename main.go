@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -48,7 +49,7 @@ func main() {
 		return
 	}
 
-	if err := sendMessage(bot, *userId); err != nil {
+	if err := sendStdin(bot, *userId); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -91,21 +92,78 @@ func replyServer(bot *tgbotapi.BotAPI) error {
 	return nil
 }
 
-func sendMessage(bot *tgbotapi.BotAPI, userId string) error {
+func sendStdin(bot *tgbotapi.BotAPI, userId string) error {
+	const maxMessageSize = 3000
 	userIdi, err := strconv.Atoi(userId)
 	if err != nil {
 		return fmt.Errorf("cant parse userId: %w", err)
 	}
 
+	//todo потоковое чтение?)
 	log.Println("Reading stdin...")
 	body, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		return fmt.Errorf("cant read stdin: %w", err)
 	}
 
-	msg := tgbotapi.NewMessage(int64(userIdi), string(body))
-	if _, err := bot.Send(msg); err != nil {
-		return fmt.Errorf("cant send msg to %d: %w", userIdi, err)
+	lines := strings.Split(string(body), "\n")
+
+	builder := strings.Builder{}
+	for i := 0; i < len(lines); i++ {
+		if builder.Len() + len(lines[i]) + 1 < maxMessageSize {
+			builder.WriteString(lines[i])
+			builder.WriteString("\n")
+			continue
+		}
+		if len(lines[i]) + 1 >= maxMessageSize {
+			chunks := splitStringByChunks(lines[i], maxMessageSize)
+			for i, chunk := range chunks {
+				if i == len(chunks) {
+					chunk += "\n"
+				}
+				if err := sendMessage(bot, userIdi, chunk); err != nil {
+					return err
+				}
+			}
+			builder.Reset()
+			continue
+		}
+
+		if err := sendMessage(bot, userIdi, builder.String()); err != nil {
+			return err
+		}
+		builder.Reset()
+		builder.WriteString(lines[i])
+		builder.WriteString("\n")
+	}
+
+	if builder.Len() > 0 {
+		if err := sendMessage(bot, userIdi, builder.String()); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func sendMessage(bot *tgbotapi.BotAPI, userId int, msg string) error {
+	fmt.Println(msg)
+	if _, err := bot.Send(tgbotapi.NewMessage(int64(userId), msg)); err != nil {
+		return fmt.Errorf("cant send msg to %d: %w", userId, err)
+	}
+
+	return nil
+}
+
+func splitStringByChunks(body string, size int) []string {
+	chunks := []string{}
+	for len(body) != 0 {
+		l := size
+		if len(body) < l {
+			l = len(body)
+		}
+		chunks = append(chunks, body[:l])
+		body = body[l:]
+	}
+
+	return chunks
 }
