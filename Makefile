@@ -30,3 +30,8 @@ echo:
 .PHONY: install
 install: build
 	sudo cp build/paranotify /usr/local/bin/paranotify
+
+.PHONY: docker
+docker:
+	docker build . -t paragor/paranotify:latest
+	docker push paragor/paranotify:latest
